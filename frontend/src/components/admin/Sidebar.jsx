@@ -14,10 +14,9 @@ import {
 const navItems = [
   { name: 'Dashboard',         path: '/admin/dashboard',   icon: <FaTachometerAlt /> },
   { name: 'Vehicles',          path: '/admin/vehicles',    icon: <FaCar /> },
-  { name: 'Inventory',         path: '/admin/inventory',   icon: <FaBoxes /> },
   { name: 'Reports',           path: '/admin/reports',     icon: <FaFileAlt /> },
   { name: 'Maintenance Tasks', path: '/admin/maintenance', icon: <FaTools /> },
-  { name: 'Users & Roles',     path: '/admin/users',       icon: <FaUsers /> },
+  { name: 'service-logs',   path: '/admin/service-logs', icon: <FaClipboardList /> },
   // If you want a link for service logs too:
   // { name: 'Service Logs', path: '/admin/service-logs', icon: <FaClipboardList /> },
 ];
