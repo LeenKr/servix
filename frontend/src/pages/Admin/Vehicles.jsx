@@ -12,7 +12,6 @@ from 'react-icons/fa';
 const sidebarSections = [
   { key: 'Details', label: 'Details', icon: <FaRegClipboard /> },
   { key: 'Maintenance', label: 'Maintenance', icon: <FaTools /> },
-  { key: 'Lifecycle', label: 'Lifecycle', icon: <FaClock /> },
   { key: 'Specifications', label: 'Specifications', icon: <FaListAlt /> },
 ];
 
