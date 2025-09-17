@@ -10,7 +10,8 @@ import ServiceLog from "./pages/Admin/ServiceLogs";
 import Maintenance from "./pages/Admin/Maintenance";
 
 import Signup from "./pages/signUpModal";          // ⬅️ Capitalized component name & file
-
+import PayInvoice from "./pages/Billing/payInvoice";
+import DriverForm from "./pages/driver/DriverForm.jsx";
 import ProtectedRoute from "./auth/ProtectedRoute";
 
 const Inventory = () => <div className="p-8">Inventory page (coming soon)</div>;
@@ -41,7 +42,11 @@ export default function App() {
         <Route path="users" element={<Users />} />
         <Route path="maintenance" element={<Maintenance />} />
       </Route>
+      <Route path="/billing/pay" element={<PayInvoice />} />
 
+<Route path="/driver" >
+        <Route index element={<DriverForm />} />
+      </Route>
       {/* Login page (public) */}
 
       {/* 404 */}

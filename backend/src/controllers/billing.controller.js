@@ -1,7 +1,7 @@
-import Stripe from "stripe";
+//import Stripe from "stripe";
 import { pool } from "../db/pool.js";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+//const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
 export async function confirmBilling(req, res) {
   const { session_id } = req.query;
