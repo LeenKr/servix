@@ -10,6 +10,7 @@ export default function LandingPage() {
       <Features />
       <Pricing />
       <Contact />
+    
     </>
   );
 }

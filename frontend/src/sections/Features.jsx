@@ -16,7 +16,7 @@ export default function Features() {
       bullets: ["Custom intervals per vehicle type", "Parts & labor cost capture"],
     },
     {
-      name: "Driver Inspections (PWA)",
+      name: "Driver Inspections",
       description:
         "Mobile daily checklists that work offline. Submit defects with photos in under a minute.",
       icon: ClipboardCheck,
