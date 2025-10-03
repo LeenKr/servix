@@ -1,20 +1,39 @@
-import "dotenv/config";
-import app from "./src/app.js";
-import { pool } from "./src/db/pool.js ";
+// src/server.js
+import dotenv from "dotenv";
+dotenv.config();
 
-const port = Number(process.env.PORT || 5000);
+console.log("🌿 ENV LOADED:", {
+  host: process.env.MYSQL_HOST,
+  user: process.env.MYSQL_USER,
+  password: process.env.MYSQL_PASSWORD,
+  db: process.env.MYSQL_DB,
+});
 
-async function start() {
-  try {
-    const [rows] = await pool.query("SELECT 1 AS ok"); // DB ping
-    console.log("MySQL connected:", rows[0]);
+import express from "express";
+import cors from "cors";
+import cookieParser from "cookie-parser";
+import routes from "./src/routes/index.js";
+import { corsOptions } from "./src/config/cors.js";
 
-    app.listen(port, () => {
-      console.log(`API listening at http://localhost:${port}`);
-    });
-  } catch (err) {
-    console.error("Failed to start server:", err);
-    process.exit(1);
-  }
-}
-start();
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+app.set("trust proxy", 1);
+
+// middlewares
+app.use(cors(corsOptions));
+app.use(cookieParser());
+app.use(express.json());
+
+// routes
+app.use("/", routes);
+
+// fallback 404
+app.use((req, res) => {
+  res.status(404).json({ ok: false, error: "not_found" });
+});
+
+// start
+app.listen(PORT, () => {
+  console.log(`Server running on http://localhost:${PORT}`);
+});

@@ -1,5 +1,5 @@
 // src/controllers/public.controller.js
-import { pool } from "../db/pool.js";
+import {pool} from "../db/pool.js";
 
 /**
  * GET /public/plans

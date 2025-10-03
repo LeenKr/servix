@@ -1,59 +1,39 @@
-//import Stripe from "stripe";
 import { pool } from "../db/pool.js";
+import { apsSign } from "../utils/aps.js";
 
-//const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+export async function checkoutAPS(req, res) {
+  const { invoice_id, customer_email } = req.body || {};
+  if (!invoice_id || !customer_email) return res.status(400).json({ ok:false, message:"Missing fields" });
 
-export async function confirmBilling(req, res) {
-  const { session_id } = req.query;
-  if (!session_id) return res.status(400).json({ ok: false, message: "Missing session_id" });
+  const [[inv]] = await pool.query(
+    `SELECT i.*, o.id AS org_id
+       FROM invoices i
+       JOIN organizations o ON o.id=i.org_id
+      WHERE i.id=?`, [invoice_id]
+  );
+  if (!inv) return res.status(404).json({ ok:false, message:"Invoice not found" });
 
-  const orgId = req.user?.orgId;
-  if (!orgId) return res.status(401).json({ ok: false, message: "Unauthorized" });
+  const env = process.env.APS_ENV === "live" ? "checkout" : "sbcheckout";
+  const paymentPageURL = `https://${env}.payfort.com/FortAPI/paymentPage`;
 
-  try {
-    // 1) get checkout session
-    const session = await stripe.checkout.sessions.retrieve(session_id);
-    if (!session || session.mode !== "subscription") {
-      return res.status(400).json({ ok: false, message: "Invalid session" });
-    }
+  const params = {
+    command: "PURCHASE",
+    access_code: process.env.APS_ACCESS_CODE,
+    merchant_identifier: process.env.APS_MERCHANT_ID,
+    merchant_reference: inv.merchant_reference,
+    amount: inv.amount,
+    currency: inv.currency || process.env.APS_CURRENCY || "USD",
+    language: process.env.APS_LANGUAGE || "en",
+    customer_email,
+    return_url: process.env.APS_RETURN_URL
+  };
 
-    // 2) get subscription from Stripe
-    const subId = typeof session.subscription === "string"
-      ? session.subscription
-      : session.subscription?.id;
-    if (!subId) return res.status(400).json({ ok: false, message: "No subscription found on session" });
+  const signature = apsSign(params, process.env.APS_SHA_REQUEST_PHRASE);
 
-    const sub = await stripe.subscriptions.retrieve(subId);
-    const periodEndSec = sub.current_period_end ?? null;   // seconds
-    const trialEndSec  = sub.trial_end ?? null;            // seconds or null
+  await pool.query(
+    "INSERT INTO payment_sessions (invoice_id, provider, status, created_at) VALUES (?, 'APS', 'pending', NOW())",
+    [invoice_id]
+  );
 
-    // 3) update the latest pending row
-    const conn = await pool.getConnection();
-    try {
-      const [result] = await conn.query(
-        `UPDATE subscriptions
-           SET status='active',
-               provider='stripe',
-               provider_sub_id=?,
-               current_period_end = IFNULL(FROM_UNIXTIME(?), current_period_end),
-               trial_end          = IFNULL(FROM_UNIXTIME(?), trial_end)
-         WHERE org_id=? AND status='pending_payment'
-         ORDER BY id DESC
-         LIMIT 1`,
-        [subId, periodEndSec, trialEndSec, orgId]
-      );
-
-      // Optional: log if nothing was updated (helps debugging)
-      if (result.affectedRows === 0) {
-        console.warn("confirmBilling: no pending row to update for org", orgId);
-      }
-    } finally {
-      conn.release();
-    }
-
-    return res.json({ ok: true });
-  } catch (err) {
-    console.error("confirmBilling error:", err);
-    return res.status(500).json({ ok: false, message: "Failed to confirm billing" });
-  }
+  return res.json({ ok:true, paymentPageURL, params: { ...params, signature } });
 }

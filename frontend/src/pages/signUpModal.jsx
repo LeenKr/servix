@@ -1,9 +1,28 @@
+// src/components/SignupModal.jsx
 import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { X } from "lucide-react";
 import logo from "../assets/logo_transparent.png";
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL || "";
+
+/** ----- APS helper: auto-POST to hosted payment page ----- */
+function autoPostToAPS(checkout) {
+  const { paymentPageURL, params } = checkout || {};
+  if (!paymentPageURL || !params) return;
+  const form = document.createElement("form");
+  form.method = "post";
+  form.action = paymentPageURL;
+  Object.entries(params).forEach(([k, v]) => {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = k;
+    input.value = String(v);
+    form.appendChild(input);
+  });
+  document.body.appendChild(form);
+  form.submit();
+}
 
 /** tiny client-side strength scorer: 0..5 */
 function scorePassword(p = "") {
@@ -70,7 +89,10 @@ export default function SignupModal({
 
   async function onSubmit(e) {
     e.preventDefault();
-    if (!agree) return; // safety guard
+    if (!agree) {
+      setError("Please agree to the Terms & Privacy.");
+      return;
+    }
     setError("");
     setLoading(true);
     try {
@@ -83,12 +105,19 @@ export default function SignupModal({
       const data = await res.json().catch(() => ({}));
       if (!res.ok || data.ok === false) throw new Error(data.message || "Signup failed");
 
-      // go to Stripe Checkout (normal flow)
-      if (data.checkout_url) {
-        window.location.assign(data.checkout_url);
+      // 👉 If backend returned APS checkout info, auto-post to APS hosted page
+      if (data.checkout?.paymentPageURL) {
+        autoPostToAPS(data.checkout);
         return;
       }
-      // fallback if you ever skip Stripe
+
+      // (Optional) Future: intermediate step page
+      if (data.next) {
+        window.location.assign(data.next);
+        return;
+      }
+
+      // Otherwise (shouldn’t happen if payment is required)
       window.location.assign("/admin");
     } catch (err) {
       setError(err.message || "Network error");

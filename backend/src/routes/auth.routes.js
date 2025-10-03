@@ -1,12 +1,8 @@
-
-// src/routes/auth.routes.js
 import { Router } from "express";
-import { signup, me } from "../controllers/auth.controller.js"; 
-import { auth } from "../middleware/auth.js";
-const r = Router();
+import { signup, me } from "../controllers/auth.controller.js";
 
-// Create org + admin, then (later) redirect to Stripe
-r.post("/signup", signup); // POST /auth/signup
-r.get("/me", auth, me); // GET /auth/me - get current user info
+const r = Router();
+r.post("/signup", signup);
+r.get("/me", me || ((_req,res)=>res.status(200).json({ok:true,authenticated:false})));
 
 export default r;

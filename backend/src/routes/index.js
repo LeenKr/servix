@@ -6,7 +6,7 @@ import { Router } from "express";
 import authRoutes from "./auth.routes.js";
 import billingRoutes from "./billing.routes.js";
 import publicRoutes from "./public.routes.js";
-import { payments } from "./payment.routes.js";
+import payment from "./payment.routes.js";
 const router = Router();
 
 // quick health check (no auth)
@@ -18,7 +18,8 @@ router.use("/auth", authRoutes);
 // mount all billing endpoints under /billing/...
 router.use("/billing", billingRoutes);
 
+// mount all public endpoints under /public/...
 router.use("/public", publicRoutes);
 
-router.use("/payments", payments); 
+router.use("/", payment); 
 export default router;
